@@ -1,54 +1,36 @@
-name: Deploy to EC2
+- name: Deploy to EC2
+  run: |
+    ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p ${{ secrets.EC2_PORT }} ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+      set -e
 
-on:
-  push:
-    branches:
-      - main
+      # 레포 존재 확인 및 git pull
+      cd ~/docker-homework || git clone https://github.com/hyeseon0105/docker-homework.git ~/docker-homework
+      cd ~/docker-homework
+      git fetch origin main
+      git reset --hard origin/main
 
-jobs:
-  deploy:
-    runs-on: ubuntu-24.04
+      # python3-venv 설치 (가상환경 생성 오류 방지)
+      sudo apt update
+      sudo apt install -y python3.12-venv
 
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+      # 가상환경 생성 및 활성화
+      python3 -m venv venv
+      source venv/bin/activate
 
-    - name: Add SSH key
-      run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.EC2_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+      # 의존성 설치
+      pip install --upgrade pip
+      pip install -r requirements.txt
 
-    - name: Deploy to EC2
-      run: |
-        ssh -i ~/.ssh/id_rsa -p ${{ secrets.EC2_PORT }} ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-          cd ~/docker-homework || git clone https://github.com/hyeseon0105/docker-homework.git ~/docker-homework
-          cd ~/docker-homework
+      # React 빌드
+      cd frontend
+      npm install
+      npm run build || exit 1
+      cd ..
 
-          git pull origin main
+      # Nginx용 경로가 없을 경우 생성
+      sudo mkdir -p /var/www/react-app
+      sudo rm -rf /var/www/react-app/*
+      sudo cp -r frontend/build/* /var/www/react-app/
 
-          # Python 가상환경 생성 및 활성화
-          python3 -m venv venv
-          source venv/bin/activate
-
-          # 의존성 설치
-          pip install -r requirements.txt
-
-          # React 빌드 (필요 시)
-          cd frontend
-          npm install
-          npm run build
-          cd ..
-
-          # React 빌드 결과를 Nginx가 서빙하는 폴더로 복사 (예: /var/www/react-app)
-          rm -rf /var/www/react-app/*
-          cp -r frontend/build/* /var/www/react-app/
-
-          # pm2로 백엔드 재시작 (gunicorn 실행 가정)
-          pm2 stop backend || true
-          pm2 start gunicorn --name backend -- app:app -b 0.0.0.0:8000
-
-          # Nginx 재시작 (필요 시)
-          sudo systemctl restart nginx
-        EOF
+      # PM2 백엔드 재시작
+      pm2 stop
