@@ -25,9 +25,7 @@ def connect_to_db():
             time.sleep(3)
 
 # PostgreSQL 연결 설정
-conn = psycopg2.connect(
-    dbname="counterdb", user="myuser", password="mypass", host="db"
-)
+conn = connect_to_db()
 cur = conn.cursor()
 
 # 테이블이 없다면 생성
