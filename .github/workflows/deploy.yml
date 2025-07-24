@@ -10,32 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Copy SSH key and set permissions
-        run: |
-          echo "${{ secrets.EC2_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
-
-      - name: Deploy on EC2 - git pull & recreate containers
+      - name: Deploy on EC2 via SSH
         uses: appleboy/ssh-action@v0.1.6
         with:
           host: ${{ secrets.EC2_HOST }}
-          port: ${{ secrets.EC2_PORT }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_KEY }}
+          key: ${{ secrets.EC2_PRIVATE_KEY }}
           script: |
-            cd ~/docker
-            if [ -d ".git" ]; then
-              echo "Repository exists, pulling latest changes..."
+            # 작업 디렉토리로 이동하거나 생성
+            mkdir -p ~/docker-homework
+            cd ~/docker-homework
+
+            # Git 저장소 초기화 or 최신화
+            if [ ! -d ".git" ]; then
+              echo "Initializing git repo..."
+              git clone https://github.com/hyeseon0105/docker-homework.git .
+            else
+              echo "Repository exists. Pulling latest changes..."
               git reset --hard
               git clean -fd
               git pull origin main
-            else
-              echo "Cloning repository..."
-              git clone https://github.com/hyeseon0105/docker-homework.git .
             fi
-            
-            # 기존 컨테이너, 네트워크, 볼륨 모두 제거 (종료 및 삭제)
+
+            # 기존 컨테이너, 네트워크, 볼륨 제거
             docker-compose down --volumes --remove-orphans
-            
-            # 다시 빌드하고 백그라운드 실행
+
+            # 새로 빌드 및 실행
             docker-compose up -d --build
