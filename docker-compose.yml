@@ -16,7 +16,9 @@ services:
   # ✅ Flask 백엔드 API 서버
   backend:
     build: ./backend                   # backend 디렉토리의 Dockerfile 기준으로 이미지 빌드
-    command: python main.py            # 컨테이너 시작 시 실행할 명령어
+    # wait-for-it.sh 스크립트로 DB가 준비될 때까지 대기 후 main.py 실행
+    command: ["./wait-for-it.sh", "db:5432", "--", "python", "main.py"]
+    # wait-for-it.sh 파일을 backend 디렉토리에 위치시켜야 함 (https://github.com/vishnubob/wait-for-it)
     # volumes:
     #   - ./backend:/app                 # 로컬 코드 변경을 컨테이너에 반영
     ports:
