@@ -19,7 +19,7 @@ def connect_to_db():
             )
             print("✅ DB 연결 성공!")
             return conn
-        except OperationalError as e:
+        except Exception as e:
             print("❌ DB 연결 실패:", e)
             print("3초 후 다시 시도합니다...")
             time.sleep(3)
