@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches:
-      - main  # 또는 deploy할 브랜치
+      - main
 
 jobs:
   deploy:
@@ -22,10 +22,33 @@ jobs:
 
     - name: Deploy to EC2
       run: |
-        ssh -i ~/.ssh/id_rsa -p ${{ secrets.EC2_PORT }} ${{ secrets.EC2_HOST }} << 'EOF'
-          cd ~/your-project-folder || git clone https://github.com/your-username/your-repo.git ~/your-project-folder
-          cd ~/your-project-folder
+        ssh -i ~/.ssh/id_rsa -p ${{ secrets.EC2_PORT }} ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+          cd ~/docker-homework || git clone https://github.com/hyeseon0105/docker-homework.git ~/docker-homework
+          cd ~/docker-homework
+
           git pull origin main
+
+          # Python 가상환경 생성 및 활성화
+          python3 -m venv venv
+          source venv/bin/activate
+
+          # 의존성 설치
+          pip install -r requirements.txt
+
+          # React 빌드 (필요 시)
+          cd frontend
           npm install
-          pm2 restart all || npm start &
+          npm run build
+          cd ..
+
+          # React 빌드 결과를 Nginx가 서빙하는 폴더로 복사 (예: /var/www/react-app)
+          rm -rf /var/www/react-app/*
+          cp -r frontend/build/* /var/www/react-app/
+
+          # pm2로 백엔드 재시작 (gunicorn 실행 가정)
+          pm2 stop backend || true
+          pm2 start gunicorn --name backend -- app:app -b 0.0.0.0:8000
+
+          # Nginx 재시작 (필요 시)
+          sudo systemctl restart nginx
         EOF
