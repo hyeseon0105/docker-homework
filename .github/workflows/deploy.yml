@@ -37,3 +37,7 @@ jobs:
 
             # 새로 빌드 및 실행
             sudo docker-compose up -d --build
+
+      - name: Create .env file
+        run: |
+          echo "REACT_APP_API_HOST=${{ secrets.EC2_HOST }}" > frontend/.env

@@ -5,7 +5,7 @@ function App() {
 
   // 버튼 클릭 시 해당 버튼 이름으로 POST 요청 보내기
   const handleClick = async (button) => {
-    const res = await fetch(`http://localhost:5000/count/${button}`, {
+    const res = await fetch(`http://${API_HOST}:5000/count/${button}`, {
       method: "POST",
     });
     const data = await res.json();
