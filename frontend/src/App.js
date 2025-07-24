@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import "./App.css";
 
-const API_HOST = process.env.REACT_APP_API_HOST || "localhost";
+// const API_HOST = process.env.REACT_APP_API_HOST || "localhost";
 
 function App() {
   const [counts, setCounts] = useState({ button1: 0, button2: 0 });
 
   // 버튼 클릭 시 해당 버튼 이름으로 POST 요청 보내기
   const handleClick = async (button) => {
-    const res = await fetch(`http://${API_HOST}:5000/count/${button}`, {
+    const res = await fetch(`http://54.83.91.96/:5000/count/${button}`, {
       method: "POST",
     });
     const data = await res.json();
