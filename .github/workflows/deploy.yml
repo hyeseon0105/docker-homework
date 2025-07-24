@@ -25,34 +25,33 @@ jobs:
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p ${{ secrets.EC2_PORT }} ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
           set -e
 
-          # 레포 존재 확인 및 git pull
+          echo "[+] 클론 또는 git pull"
           cd ~/docker-homework || git clone https://github.com/hyeseon0105/docker-homework.git ~/docker-homework
           cd ~/docker-homework
           git fetch origin main
           git reset --hard origin/main
 
-          # python3-venv 설치 (가상환경 생성 오류 방지)
+          echo "[+] python3-venv 설치"
           sudo apt update
           sudo apt install -y python3.12-venv
 
-          # 가상환경 생성 및 활성화
+          echo "[+] 가상환경 생성 및 패키지 설치"
           python3 -m venv venv
           source venv/bin/activate
-
-          # 의존성 설치
           pip install --upgrade pip
           pip install -r requirements.txt
 
-          # React 빌드
+          echo "[+] React 앱 빌드"
           cd frontend
           npm install
-          npm run build || exit 1
+          npm run build
           cd ..
 
-          # Nginx용 경로가 없을 경우 생성
+          echo "[+] Nginx용 폴더 준비"
           sudo mkdir -p /var/www/react-app
           sudo rm -rf /var/www/react-app/*
           sudo cp -r frontend/build/* /var/www/react-app/
 
-          # PM2 백엔드 재시작
-          pm2 stop
+          echo "[+] PM2로 백엔드 재시작"
+          pm2 restart all || pm2 start main.py --interpreter venv/bin/python
+        EOF
