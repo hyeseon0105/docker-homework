@@ -1,9 +1,28 @@
 from flask import Flask, jsonify, request
 import psycopg2
 from flask_cors import CORS  # CORS 허용을 위한 설정
+import time
 
 app = Flask(__name__)
 CORS(app)  # 프론트에서 API 호출 가능하게 CORS 허용
+
+# DB 연결 재시도 함수
+def connect_to_db():
+    while True:
+        try:
+            conn = psycopg2.connect(
+                dbname="counterdb",
+                user="myuser",
+                password="mypass",
+                host="db",
+                port=5432
+            )
+            print("✅ DB 연결 성공!")
+            return conn
+        except OperationalError as e:
+            print("❌ DB 연결 실패:", e)
+            print("3초 후 다시 시도합니다...")
+            time.sleep(3)
 
 # PostgreSQL 연결 설정
 conn = psycopg2.connect(
