@@ -1,4 +1,7 @@
 import React, { useState } from "react";
+import "./App.css";
+
+const API_HOST = process.env.REACT_APP_API_HOST || "localhost";
 
 function App() {
   const [counts, setCounts] = useState({ button1: 0, button2: 0 });

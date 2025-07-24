@@ -21,6 +21,9 @@ jobs:
             mkdir -p ~/docker-homework
             cd ~/docker-homework
 
+            # .env 파일 생성
+            echo "REACT_APP_API_HOST=${{ secrets.EC2_HOST }}" > frontend/.env
+
             # Git 저장소 초기화 or 최신화
             if [ ! -d ".git" ]; then
               echo "Initializing git repo..."
@@ -37,7 +40,3 @@ jobs:
 
             # 새로 빌드 및 실행
             sudo docker-compose up -d --build
-
-      - name: Create .env file
-        run: |
-          echo "REACT_APP_API_HOST=${{ secrets.EC2_HOST }}" > frontend/.env
