@@ -25,33 +25,35 @@ jobs:
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -p ${{ secrets.EC2_PORT }} ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
           set -e
 
-
-          cd ~/docker-homework || git clone https://github.com/hyeseon0105/docker-homework.git ~/docker-homework
+          echo "[+] 기존 프로젝트 삭제 및 클론"
+          rm -rf ~/docker-homework
+          git clone https://github.com/hyeseon0105/docker-homework.git ~/docker-homework
           cd ~/docker-homework
-          git fetch origin main
-          git reset --hard origin/main
 
-
+          echo "[+] Python 3.12 venv 설치 및 환경 구성"
           sudo apt update
           sudo apt install -y python3.12-venv
 
-
           python3 -m venv venv
           source venv/bin/activate
+
+          echo "[+] Python 패키지 설치"
           pip install --upgrade pip
           pip install -r requirements.txt
 
-
+          echo "[+] React 앱 빌드"
           cd frontend
           npm install
           npm run build
           cd ..
 
-
+          echo "[+] React 빌드 결과를 Nginx 경로로 복사"
           sudo mkdir -p /var/www/react-app
           sudo rm -rf /var/www/react-app/*
           sudo cp -r frontend/build/* /var/www/react-app/
 
+          echo "[+] PM2로 백엔드 재시작"
+          pm2 restart all || pm2 start app.py --name backend
 
-          pm2 restart all || pm2 start main.py --interpreter venv/bin/python
+          echo "배포 완료"
         EOF
