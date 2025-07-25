@@ -13,7 +13,6 @@ function App() {
     });
     const data = await res.json();
 
-    // 응답 받은 카운트를 화면에 업데이트
     setCounts((prev) => ({ ...prev, [button]: data.count }));
   };
 
